@@ -1,0 +1,47 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: bugsentry-auth-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bugsentry-auth-api
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "8001:8001"
+    environment:
+      APP_ENV: development
+      APP_PORT: 8001
+      APP_WORKERS: 2
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: bugsentry_auth
+      JWT_SECRET: dev_secret_replace_in_production_min32chars
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRY_HOURS: 24
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITLAB_CLIENT_ID: ${GITLAB_CLIENT_ID:-}
+      GITLAB_CLIENT_SECRET: ${GITLAB_CLIENT_SECRET:-}
+      FRONTEND_URL: http://localhost:5173
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3000
+      PUBLIC_URL: http://localhost:8001
+
+volumes:
+  mongo_data:
