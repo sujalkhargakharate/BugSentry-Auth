@@ -1,4 +1,4 @@
-# Sanjeevani Auth Service
+# BugSentry Auth Service
 
 Central auth service for three MVP applications:
 
